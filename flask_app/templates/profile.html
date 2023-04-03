@@ -1,0 +1,18 @@
+{% extends 'layout.html' %}
+
+{% block title %}Profile{% endblock %}
+
+{% block content %}
+<br>
+<div class="container">
+  <div class="card">
+    <h5 class="card-header">{{ account.username }}</h5>
+    <div class="card-body">
+      <h5 class="card-title">Special title treatment</h5>
+      <p class="card-text">Email: {{ account.email }}</p>
+      <a href="{{ url_for('edit_profile') }}" class="btn btn-primary">Edit Profile</a>
+      <a href="{{ url_for('change_password') }}" class="btn btn-primary">Change Password</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

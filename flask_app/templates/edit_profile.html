@@ -1,0 +1,55 @@
+{% extends 'layout.html' %}
+
+{% block title %}Edit profile{% endblock %}
+
+{% block content %}
+<div class="container">
+  <h1>Edit Profile</h1>
+
+  {% if update_msg %}
+    <div class="alert alert-success" role="alert">
+      {{ update_msg }}
+    </div>
+  {% endif %}
+
+  {% if no_change_msg %}
+    <div class="alert alert-danger" role="alert">
+      {{ no_change_msg }}
+    </div>
+  {% endif %}
+
+  {% if email_msg %}
+    <div class="alert alert-danger" role="alert">
+      {{ email_msg }}
+    </div>
+  {% endif %}
+
+  {% if user_msg %}
+    <div class="alert alert-danger" role="alert">
+      {{ user_msg }}
+    </div>
+  {% endif %}
+
+  {% if wrong_pw_msg %}
+    <div class="alert alert-danger" role="alert">
+      {{ wrong_pw_msg }}
+    </div>
+  {% endif %}
+
+  <form method="POST" action="{{ url_for('edit_profile') }}">
+    <div class="form-group">
+      <label for="username">Username:</label>
+      <input type="text" class="form-control" id="username" name="username" value="{{ account.username }}" required>
+    </div>
+    <div class="form-group">
+      <label for="email">Email:</label>
+      <input type="email" class="form-control" id="email" name="email" value="{{ account.email }}" required>
+    </div>
+    <div class="form-group">
+      <label for="password">Current Password:</label>
+      <input type="password" class="form-control" id="password" name="password" value="" required>
+    </div>
+    <button type="submit" class="btn btn-primary">Update Profile</button>
+  </form>
+</div>
+{% endblock %}
