@@ -4,14 +4,22 @@
 
 {% block content %}
 <br>
-<div class="container">
-  <div class="card">
-    <h5 class="card-header">{{ account.username }}</h5>
-    <div class="card-body">
-      <h5 class="card-title">Special title treatment</h5>
-      <p class="card-text">Email: {{ account.email }}</p>
-      <a href="{{ url_for('edit_profile') }}" class="btn btn-primary">Edit Profile</a>
-      <a href="{{ url_for('change_password') }}" class="btn btn-primary">Change Password</a>
+<div class="container py-4">
+  <div class="p-5 mb-4 bg-light border rounded-3">
+    <div class="row">
+      <div class="col-md-4">
+        <img src="{{ url_for('static', filename='images/556d581a03300dc936f42510e8f159d5.jpg') }}" alt="User Image" width="280" height="310">
+      </div>
+      <div class="col-md-8">
+        <div class="card-body">
+          <h5 class="card-title">Profile</h5>
+          <p class="card-text">Email: {{ account.email }}</p>
+          <p class="card-text">Description: {{ account.profile_description }}</p>
+          <a href="{{ url_for('edit_user_info') }}" class="btn btn-primary">Change Username/Email</a>
+          <a href="{{ url_for('change_password') }}" class="btn btn-primary">Change Password</a>
+          <a href="{{ url_for('edit_profile_page') }}" class="btn btn-primary">Edit Profile Page</a>
+        </div>
+      </div>
     </div>
   </div>
 </div>

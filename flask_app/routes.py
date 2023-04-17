@@ -1,6 +1,7 @@
 from flask import request, render_template, redirect, url_for, session
 import re
-from flask_app import app, db, cursor
+from flask_app import app, db, cursor, mysql_
+import plotly.graph_objs as go
 
 
 # define a route
@@ -118,13 +119,8 @@ def music_chart():
     return redirect(url_for('profile'))
 
 
-@app.route('/Dashboard')
-def dashboard():
-    return render_template('dashboard.html')
-
-
-@app.route('/edit_profile', methods=['GET', 'POST'])
-def edit_profile():  # ATTEMPT PUT METHOD WHEN HAVE THE CHANCE
+@app.route('/edit_user', methods=['GET', 'POST'])
+def edit_user_info():  # ATTEMPT PUT METHOD WHEN HAVE THE CHANCE
     # Check if user is logged in
     if 'loggedin' not in session:
         # If not logged in, redirects to login page
@@ -134,7 +130,8 @@ def edit_profile():  # ATTEMPT PUT METHOD WHEN HAVE THE CHANCE
     cursor.execute('SELECT * FROM rando_project_login WHERE id = %s', (session['id'],))
     account = cursor.fetchone()
     # Handle form submission
-    if request.method == 'POST' and 'username' in request.form and 'email' in request.form and 'password' in request.form:
+    if request.method == 'POST' and 'username' in request.form and 'email' in request.form and 'password' in \
+            request.form:
         # Get form data
         username = request.form['username']
         email = request.form['email']
@@ -148,13 +145,13 @@ def edit_profile():  # ATTEMPT PUT METHOD WHEN HAVE THE CHANCE
         # If form username and form email is the same as the username and email logged in, no changes has been made
         if username == account['username'] and email == account['email']:
             no_change_msg = 'No changes has been made.'
-            return render_template('edit_profile.html', account=account, user_msg=no_change_msg)
+            return render_template('edit_user_info.html', account=account, user_msg=no_change_msg)
         # If email and username do not exist in the database but password is incorrect, no changes occurs
-        elif not existing_email and not existing_username and not account['password']:
+        elif not existing_email and not existing_username and password != account['password']:
             wrong_pw_msg = 'Incorrect password.'
-            return render_template('edit_profile.html', account=account, wrong_pw_msg=wrong_pw_msg)
+            return render_template('edit_user_info.html', account=account, wrong_pw_msg=wrong_pw_msg)
         # If email and username do not exist in the db and pw is correct
-        elif not existing_email and not existing_username and account['password']:
+        elif not existing_email and not existing_username and password == account['password']:
             # Update the user's email and username
             cursor.execute('UPDATE rando_project_login SET email = %s, username = %s WHERE id = %s',
                            (email, username, session['id'],))
@@ -163,17 +160,17 @@ def edit_profile():  # ATTEMPT PUT METHOD WHEN HAVE THE CHANCE
         elif existing_email:
             # Email is already in the database
             email_msg = 'Email is already in use.'
-            return render_template('edit_profile.html', account=account, email_msg=email_msg)
+            return render_template('edit_user_info.html', account=account, email_msg=email_msg)
         elif existing_username:
             # Username is already in the database
             user_msg = 'Username is already in use.'
-            return render_template('edit_profile.html', account=account, user_msg=user_msg)
+            return render_template('edit_user_info.html', account=account, user_msg=user_msg)
         else:
             # Both email and username are None, this should not happen
             error_msg = 'An error occurred. Please try again.'
-            return render_template('edit_profile.html', account=account, error_msg=error_msg)
+            return render_template('edit_user_info.html', account=account, error_msg=error_msg)
     # If user is logged, go to the edit profile page
-    return render_template('edit_profile.html', account=account)
+    return render_template('edit_user_info.html', account=account)
 
 
 @app.route('/change_password', methods=['POST', 'GET'])
@@ -192,7 +189,7 @@ def change_password():  # ATTEMPT PUT METHOD WHEN HAVE THE CHANCE
         new_password = request.form['new_password']
         # If new password is the same password as the user logged in, no change occurs
         if new_password == account['password']:
-            existing_pw_msg = "You're currently using this password"
+            existing_pw_msg = "Cannot change password to an existing password"
             return render_template('change_password.html', account=account, existing_pw_msg=existing_pw_msg)
         # If new password is not the same as current password but current input password is not the same as current
         # existing password, no changes occur
@@ -206,3 +203,82 @@ def change_password():  # ATTEMPT PUT METHOD WHEN HAVE THE CHANCE
             success_mg = 'Password successfully changed.'
             return render_template('change_password.html', account=account, success_mg=success_mg)
     return render_template('change_password.html', account=account)
+
+
+@app.route('/edit_profile_page', methods=['POST', 'GET'])
+def edit_profile_page():
+    if 'loggedin' not in session:
+        return redirect(url_for('login'))
+    cursor = db.cursor(dictionary=True)
+    cursor.execute('SELECT * FROM rando_project_login WHERE id = %s', (session['id'],))
+    account = cursor.fetchone()
+    if request.method == 'POST' and 'description' in request.form:
+        new_description = request.form['description']
+        if new_description == account['profile_description']:
+            no_change_msg = 'No changes detected'
+            return render_template('edit_profile_page.html', account=account, no_change_msg=no_change_msg)
+        elif new_description != account['profile_description']:
+            cursor.execute('UPDATE rando_project_login SET profile_description = %s WHERE id = %s',
+                           (new_description, session['id'],))
+            db.commit()
+            return redirect(url_for('profile'))
+    return render_template('edit_profile_page.html', account=account)
+
+
+@app.route('/dashboard')
+def dashboard():
+    # Cards
+    cursor = mysql_.connection.cursor()
+    # Number of tracks in the database
+    cursor.execute("""SELECT COUNT(*) FROM rando_project""")
+    track_count = cursor.fetchone()[0]
+
+    # Groups by artist name and takes the highest frequency of artist that appears
+    cursor.execute("""SELECT artist_name, COUNT(artist_name) FROM rando_project GROUP BY artist_name 
+                      ORDER BY COUNT(artist_name) DESC""")
+    most_listened_artist = cursor.fetchone()[0]
+
+    # Groups by track name and takes the highest frequency of track that appears
+    cursor.execute("""SELECT track_name, artist_name, COUNT(track_name) FROM rando_project 
+                      GROUP BY track_name, artist_name ORDER BY COUNT(track_name) DESC""")
+    most_listened_track = cursor.fetchone()[0]
+
+    # Working on SQL code to get genres
+    cursor.execute("""SELECT COUNT(*) AS entry_count FROM rando_project""")
+    extra_count = cursor.fetchone()[0]
+
+    # Generate Plotly charts
+    chart1_query = """SELECT track_name, artist_name, track_popularity FROM rando_project"""
+    cursor.execute(chart1_query)
+    data = cursor.fetchall()
+    trace1 = go.Scatter(x=[row[0] for row in data],
+                        y=[row[2] for row in data],
+                        mode='markers',
+                        name='Track Popularity')
+    layout1 = go.Layout(title='Chart 1 Title')
+    chart1 = go.Figure(data=[trace1], layout=layout1)
+
+    chart2_query = """SELECT track_name, artist_name, timestamp_est_formatted FROM rando_project"""
+    cursor.execute(chart2_query)
+    data = cursor.fetchall()
+    trace2 = go.Scatter(x=[row[2] for row in data],
+                        y=[row[0] for row in data],
+                        mode='markers',
+                        name='Track Popularity')
+    layout2 = go.Layout(title='Chart 2 Title')
+    chart2 = go.Figure(data=[trace2], layout=layout2)
+
+    chart3_query = """SELECT track_name, artist_name, track_popularity FROM rando_project"""
+    cursor.execute(chart3_query)
+    data = cursor.fetchall()
+    trace3 = go.Scatter(x=[row[2] for row in data],
+                        y=[row[0] for row in data],
+                        mode='markers',
+                        name='Track Popularity')
+    layout3 = go.Layout(title='Chart 3 Title')
+    chart3 = go.Figure(data=[trace3], layout=layout3)
+    chart3.update_xaxes(tickmode='array', dtick=1)
+
+    return render_template('dashboard.html', chart1=chart1, chart2=chart2, chart3=chart3, track_count=track_count,
+                           most_listened_artist=most_listened_artist, most_listened_track=most_listened_track,
+                           extra_count=extra_count)

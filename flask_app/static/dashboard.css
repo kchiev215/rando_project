@@ -1,0 +1,28 @@
+/* dashboard.css */
+
+.card-container {
+ display: flex; /* Use flexbox layout */
+ justify-content: center; /* Center align the cards horizontally */
+ align-items: center; /* Center align the cards vertically */
+ height: 100; /* Set the height of the container to 100% of the viewport height */
+}
+
+.card {
+ flex: 1; /* Distribute the available space evenly among the cards */
+ margin: 0 10px; /* Add horizontal spacing between the cards */
+ /* Add card styles as needed */
+ border: 1px solid #ccc;
+ border-radius: 5px;
+ padding: 20px;
+ text-align: center;
+}
+
+h1 {
+ font-size: 24px;
+ color: #333;
+}
+
+p {
+ font-size: 18px;
+ color: #777;
+}

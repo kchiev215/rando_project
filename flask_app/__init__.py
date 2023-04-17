@@ -2,9 +2,13 @@ from flask import Flask
 from data_extraction import credentials
 from flask_mysqldb import MySQL
 import mysql.connector
+from flask_bootstrap import Bootstrap4
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='static')
 app.secret_key = '123secret'
+
+# Getting bootstrap
+bootstrap = Bootstrap4(app)
 
 # Initialize MySQL
 mysql_ = MySQL(app)

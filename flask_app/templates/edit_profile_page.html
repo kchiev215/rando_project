@@ -1,0 +1,38 @@
+{% extends 'layout.html' %}
+
+{% block title %}Edit Profile Page{% endblock %}
+
+{% block content %}
+<!-- Breadcrumbs -->
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb" style="background-color: white !important;">
+    <li class="breadcrumb-item"><a href="{{ url_for('profile') }}">Profile</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Edit Profile</li>
+  </ol>
+</nav>
+
+<div class="container">
+    <br>
+    <h1>Edit Profile Page</h1>
+
+    {% if success_msg %}
+    <div class="alert alert-success" role="alert">
+      {{ success_msg }}
+    </div>
+    {% endif %}
+
+    {% if no_change_msg %}
+    <div class="alert alert-danger" role="alert">
+      {{ no_change_msg }}
+    </div>
+    {% endif %}
+
+    <form method="POST" action="{{ url_for('edit_profile_page') }}">
+        <div class="form-group">
+            <label for="description">User Description:</label>
+            <textarea class="form-control" id="description" name="description" style="height: 150px;" required>{{ account.profile_description }}</textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Update User Information</button>
+    </form>
+</div>
+{% endblock %}

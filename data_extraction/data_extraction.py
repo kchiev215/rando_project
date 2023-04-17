@@ -2,7 +2,7 @@
 import spotipy
 import mysql.connector
 from credentials import *
-from datetime import datetime
+from datetime import datetime, timedelta
 
 # STEPS TO GET DONE
 
@@ -26,6 +26,7 @@ create_db_query = """CREATE TABLE IF NOT EXISTS rando_project(
                     artist_genre VARCHAR(255) NOT NULL,
                     release_date DATE NOT NULL,
                     timestamp_formatted TIMESTAMP NOT NULL PRIMARY KEY,
+                    timestamp_est_formatted TIMESTAMP NOT NULL,
                     danceability INT NOT NULL,
                     energy INT NOT NULL,
                     key_of_song INT NOT NULL,
@@ -45,6 +46,7 @@ cursor = cnn.cursor()
 # Open up the database
 cursor.execute(create_db_query)
 
+
 # Pull from spotify API
 for item in rp['items']:
     track = item['track']
@@ -56,10 +58,6 @@ for item in rp['items']:
     artist_genre = artist_genres[0] if artist_genres else "N/A"
     release_date = track['album']['release_date']
     timestamp_str = item['played_at']
-    # Convert timestamp to datetime object
-    timestamp = datetime.fromisoformat(timestamp_str[:-1])
-    # Format datetime object as string without "Z" character
-    timestamp_formatted = timestamp.strftime('%Y-%m-%d %H:%M:%S')
     danceability = sp.audio_features(track['uri'])[0]['danceability']
     energy = sp.audio_features(track['uri'])[0]['energy']
     key_of_song = sp.audio_features(track['uri'])[0]['key']
@@ -73,19 +71,31 @@ for item in rp['items']:
     tempo = sp.audio_features(track['uri'])[0]['tempo']
     duration_ms = sp.audio_features(track['uri'])[0]['duration_ms']
 
+    # Convert timestamp to datetime object in UTC
+    timestamp = datetime.fromisoformat(timestamp_str[:-1])
+
+    # Convert timestamp from UTC to EST
+    est_offset = -5  # Eastern Standard Time (EST) offset is -5 hours
+    timestamp_est = timestamp - timedelta(hours=est_offset)
+
+    # Format datetime objects as strings without "Z" character
+    timestamp_formatted = timestamp.strftime('%Y-%m-%d %H:%M:%S')
+    timestamp_est_formatted = timestamp_est.strftime('%Y-%m-%d %H:%M:%S')
+
     # Push into mysql database
     insert_query = """
         INSERT INTO rando_project(
-            track_name, artist_name, track_popularity, album, artist_genre, release_date, timestamp_formatted,
-            danceability, energy, key_of_song, loudness, mode, speechiness, acousticness, instrumentalness,
-            liveness, valence, tempo, duration_ms) 
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) 
+            track_name, artist_name, track_popularity, album, artist_genre, release_date, timestamp_formatted, 
+            timestamp_est_formatted, danceability, energy, key_of_song, loudness, mode, speechiness, acousticness, 
+            instrumentalness,liveness, valence, tempo, duration_ms) 
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) 
         ON DUPLICATE KEY UPDATE
             artist_name=VALUES(artist_name),
             track_popularity=VALUES(track_popularity),
             album=VALUES(album),
             artist_genre=VALUES(artist_genre),
             release_date=VALUES(release_date),
+            timestamp_est_formatted=VALUES(timestamp_est_formatted),
             danceability=VALUES(danceability),
             energy=VALUES(energy),
             key_of_song=VALUES(key_of_song),
@@ -104,8 +114,8 @@ for item in rp['items']:
 
     values = (
         track_name, artist_name, track_popularity, album, artist_genre, release_date, timestamp_formatted,
-        danceability, energy, key_of_song, loudness, mode, speechiness, acousticness, instrumentalness,
-        liveness, valence, tempo, duration_ms
+        timestamp_est_formatted, danceability, energy, key_of_song, loudness, mode, speechiness, acousticness,
+        instrumentalness, liveness, valence, tempo, duration_ms
     )
 
     # Execute the query with the values

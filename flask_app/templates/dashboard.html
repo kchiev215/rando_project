@@ -2,11 +2,52 @@
 
 {% block title %}Dashboard{% endblock %}
 
-
 {% block content %}
-<br>
-<div class="container">
-    <h1>Under construction</h1>
 
+<!-- Include the style.css file directly -->
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='dashboard.css') }}">
+
+<br>
+<!-- Card Container -->
+<div class="card-container">
+
+    <!-- Card 1 -->
+    <div class="card">
+        <h1>Total # of Tracks</h1>
+        <p id="trackCountCard">{{ track_count }}</p>
+    </div>
+
+    <!-- Card 2 -->
+    <div class="card">
+        <h1>Most Listen Artist</h1>
+        <p id="artistCard">{{ most_listened_artist }}</p>
+    </div>
+
+    <!-- Card 3 -->
+    <div class="card">
+        <h1>Most Listen Track</h1>
+        <p id="trackCard">{{ most_listened_track }}</p>
+    </div>
+
+    <!-- Card 4 -->
+    <div class="card">
+        <h1>Most Listen Genre</h1>
+        <p id="extraCount">{{ extra_count }}</p>
+    </div>
 </div>
+<br>
+
+<!-- Charts Section -->
+<div>
+    {{ chart1.to_html(full_html=False) | safe }}
+</div>
+
+<div>
+    {{ chart2.to_html(full_html=False) | safe }}
+</div>
+
+<div>
+    {{ chart3.to_html(full_html=False) | safe }}
+</div>
+
 {% endblock %}
