@@ -243,9 +243,17 @@ def dashboard():
                       GROUP BY track_name, artist_name ORDER BY COUNT(track_name) DESC""")
     most_listened_track = cursor.fetchone()[0]
 
-    # Working on SQL code to get genres
-    cursor.execute("""SELECT COUNT(*) AS entry_count FROM rando_project""")
-    extra_count = cursor.fetchone()[0]
+    # Group Genres
+    cursor.execute("""SELECT COUNT(*) AS genre_count, 
+       CASE 
+           WHEN artist_genre LIKE 'K-p%' THEN 'k-pop'
+           WHEN artist_genre LIKE 'C-P%' OR artist_genre LIKE 'MANDO%' OR artist_genre LIKE 'CHI%' THEN 'c-pop'
+           ELSE artist_genre
+       END AS labeled_genre 
+       FROM rando_project 
+       GROUP BY labeled_genre 
+       ORDER BY genre_count DESC;""")
+    extra_count = cursor.fetchone()[1]
 
     # Generate Plotly charts
     chart1_query = """SELECT track_name, artist_name, track_popularity FROM rando_project"""
